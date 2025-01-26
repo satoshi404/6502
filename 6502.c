@@ -4,7 +4,8 @@
 #define MAX_MEMORY 1024 * 64
 
 // Instruction 
-#define INSTRUCTION_LDA 0xA9
+#define INSTRUCTION_LDA_IMMEDIATE 0xA9
+#define INSTRUCTION_LDA_ZEROPAGE 0xAD
 
 // Cpu 6502 emulator
 
@@ -42,14 +43,27 @@ void cpu_execute(CPU *cpu,unsigned int* cycles,  Memory *mem);
 BYTE cpu_fetch(CPU *cpu, unsigned int* cycles,  Memory *mem);
 
 
+
+
+void print_memory(Memory *mem) {
+    for (int i = 0; i < MAX_MEMORY; i++) {
+        printf("%02X ", mem->ram[i]);
+        if (i % 16 == 15) {
+            printf("\n");
+        }
+    }
+}
+
 int main() {
     Memory *mem = memory_init();
     CPU *cpu = cpu_init();
     unsigned int cycles = 2;
     cpu_reset(cpu, mem);
-    mem->ram[0xFFFC] = INSTRUCTION_LDA;
-    mem->ram[0xFFFD] = 0x02;  // Load address of instruction into program counter
+    mem->ram[0xFFFC] = INSTRUCTION_LDA_ZEROPAGE;
+    mem->ram[0xFFFD] = 0x42;  // Load address of instruction into program counter
+    mem->ram[0xFFFE] = 0x84; // Load address of instruction into program counter
     cpu_execute(cpu, &cycles, mem);
+    print_memory(mem);
     return 0;
 }
 
@@ -100,17 +114,25 @@ void cpu_execute(CPU *cpu, unsigned int* cycles, Memory *mem) {
      printf("Cycles %d\n", *cycles);
      // Execute instruction
      switch (instruction) {
-        case INSTRUCTION_LDA: {
+        case INSTRUCTION_LDA_IMMEDIATE: {
             // Load accumulator with value from memory
             BYTE value = *memory_operator(mem, cpu->pc++);
             cpu->a = value;
             cpu->z = (cpu->a == 0);
             cpu->n = (cpu->a & 0x80) >> 7;
             break;
+        } case INSTRUCTION_LDA_ZEROPAGE: {
+            // Load accumulator with value from zero page
+            BYTE address = *memory_operator(mem, cpu->pc++);
+            BYTE value = *memory_operator(mem, address);
+            cpu->a = value;
+            cpu->z = (cpu->a == 0);
+            cpu->n = (cpu->a & 0x80) >> 7;
+            break;
         }
-        default:
-            fprintf(stderr, "Unknown instruction: %02X\n", instruction);
-            exit(1);
+        //default:
+          //  fprintf(stderr, "Unknown instruction: %02X\n", instruction);
+            //exit(1);
      }
    }
 }
