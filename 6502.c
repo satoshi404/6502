@@ -3,11 +3,19 @@
 
 #define MAX_MEMORY 1024 * 64
 
-// Instruction 
+// Instructions
 #define INSTRUCTION_LDA_IMMEDIATE 0xA9
 #define INSTRUCTION_LDA_ZEROPAGE 0xAD
+#define INSTRUCTION_LDX_IMMEDIATE 0xA2
+#define INSTRUCTION_LDX_ZEROPAGE 0xA6
+#define INSTRUCTION_LDY_IMMEDIATE 0xA0
+#define INSTRUCTION_LDY_ZEROPAGE 0xA4
+#define INSTRUCTION_STA_ZEROPAGE 0x85
+#define INSTRUCTION_STA_ABSOLUTE 0x8D
+#define INSTRUCTION_STX_ZEROPAGE 0x86
+#define INSTRUCTION_STX_ABSOLUTE 0x8E
 
-// Cpu 6502 emulator
+// ====== Cpu 6502 emulator ========
 
 // Define CPU register types here
 typedef unsigned char  BYTE;
@@ -128,6 +136,14 @@ void cpu_execute(CPU *cpu, unsigned int* cycles, Memory *mem) {
             cpu->a = value;
             cpu->z = (cpu->a == 0);
             cpu->n = (cpu->a & 0x80) >> 7;
+            break;
+        } case INSTRUCTION_LDX_ZEROPAGE: {
+            // Load index register X with value from zero page
+            BYTE address = *memory_operator(mem, cpu->pc++);
+            BYTE value = *memory_operator(mem, address);
+            cpu->x = value;
+            cpu->z = (cpu->x == 0);
+            cpu->n = (cpu->x & 0x80) >> 7;
             break;
         }
         //default:
